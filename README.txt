@@ -3,7 +3,7 @@ Track fitness of deletion mutants with a randomly barcoded random insertion libr
 
 Please note, this is scientific software for research purposes only.  It is offered freely in the hope that it will be useful, but with no guarantees whatsoever.  It has been tested, but only modestly.  Proceed with caution.
 
-Updated 8 April 2019
+Updated July 1, 2019
 
 This software is currently unpublished, but is based on analysis published in 'Functional genomics of lipid metabolism in the oleaginous yeast Rhodosporidium toruloides' by Coradetti et al. 2018 (DOI: 10.7554/eLife.32110.001) and Rapid Quantification of Mutant Fitness in Diverse Bacteria by Sequencing Randomly Bar-Coded Transposons by Wetmore et al 2015 (DOI 10.1128/mBio.00306-15).
 
@@ -31,6 +31,15 @@ This program takes as input the barcode counts from RBseq_Count.py and calculate
 -Biopython 1.72 or later
 -Anaconda scientific computing environment or the following python libraries: numpy, pandas, matplotlib, json, scipy, and stats models
 -NCBI BLAST+ 2.2.30 or later
+
+Most recently tested with the following versions of python packages:
+python: 3.7.6
+biopython: 1.76
+numpy: 1.18.5
+pandas: 1.0.5
+scipy: 1.5.0
+matplotlib: 3.2.2
+statsmodels: 0.11.1 
 
 --USAGE--
 Each script requires a metadata file to list input sequencing files, required reference files and some common options, including output file locations.  These text files are passed to the script with the -m or --metafile flag.  The scripts provide a series of status updates to STDOUT and simultaneously save them in log file for easy reference later. By default, the log files are given a unique name based on the date, but you can change this with the optional -l or --logFile flag.
@@ -199,6 +208,9 @@ python RBseq_Count_Barcodes.py -m metadatafile [-l logfile --matchBefore 6 --mat
   -m/--metafile METAFILE
     Metadata file for BarSeq runs. Contains the following columns:
 
+      FileIndex
+      An unique integer for each fastq file to be processed. Used to store intermediate files listing counts for all complaint barcodes found in a given fastq file. Note these are counts for all possible barcodes seen in the sequence, not only those found in the mapped insertion pool reference file.
+
       Fastq
       Full or relative path to barseq fastq files.
 
@@ -245,15 +257,21 @@ python RBseq_Count_Barcodes.py -m metadatafile [-l logfile --matchBefore 6 --mat
   -a/--matchAfter
     Number of bases to match after the barcode. Default is 6.  Note that in some cases this search region may be approaching the end of 50bp BarSeq reads.  If matchAfter happens to span the end of the read, and thus there aren't as many bases to match as set here, but there are 2 or more bases to mach, as many bases are available up to the number specified will be matched.  If there aren't 2 or more bases to match, then the read will be discarded.
 
+  -Q/--quietMode
+    If this flag is passed the script will run in 'quiet mode' and give fewer details from each fastq on the command line and in the log file.  All the same statistics will still be reported in fastqSummaryStats.txt
+
 RBseq_Count_Barcodes.py Outputs
   
-  RBseq_Count_Barcodes.py will summarize the number of barcodes seen for each sample, and use the most abundant barcode to estimate overall error rate.  It will also offer an extremely approximate guess at to the real diversity of barcodes present in the physical sample using the formula postulated by (Chao 1987): N seen once squared divided by two times N seen twice.  This number is at best a guess within a few orders of magnitude in this context and is really just confirmation that there is likely a large diverse population of unique barcodes in your sample or there isn't.
+  RBseq_Count_Barcodes.py will summarize the number of barcodes seen for each fastqfile, and use the most abundant barcode to estimate overall error rate (the percent of reads with sequence errors in the barcode).  It reports the number barcodes seen once, twice or three times or more in the fastq file, as well as an an extremely approximate guess at to the real diversity of barcodes present in the physical sample using the formula postulated by (Chao 1987): N seen once squared divided by two times N seen twice.  The Chao estimate can be useful when read depth is limiting and the vast majority of one or two count barcodes are real.  At higher read depths the one and two count barcodes are more inflated with sequencing errors and the number of barcodes with three or more counts is probably a better indicator of the actual population size.
 
   poolCount.txt
-    Tab-delimited file with uniquely mapped barcodes in the insertion pool, some information about their location and genomic context, and the number of times each was seen in each sample.
+    Tab-delimited file with uniquely mapped barcodes in the insertion pool, some information about their location and genomic context, and the number of times each was seen in each sample.  Note that for a given biological sample multiple different fastq files can be loaded into this script representing different technical replicates, repeated sequence runs, etc, but in the final output, counts for each sample (indicated by the SampleName field in the metafile) will be aggregated across all input fastqs. 
 
   countsFiles
-    A directory of files with raw barcode counts seen in each sample.  These include barcodes not in the mapped mutant pool. These files can be used to repeat counts with an updated poolfile without the time consuming step of finding and counting barcodes in all reads.
+    A directory of files with raw barcode counts seen in each fastq file.  These include barcodes not in the mapped mutant pool. These files can be used to repeat counts with an updated poolfile without the time consuming step of finding and counting barcodes in all reads.
+
+  fastqSummaryStats.txt
+    A tab-delimited file summarizing some statistics on barcodes seen in each sequence file.  These are the same stats reported on the command line (total reads, reads with barcodes, etc).  Note that for any files with UsePrecounted = TRUE in the metafile some of these statistics won't be reported as any information on reads without complaint barcodes are not saved in the intermediate .counts files.
 
 --
 RBseq_Calculate_Fitness.py Inputs
@@ -307,6 +325,9 @@ python RBseq_Count_Barcodes.py -m metadatafile [--logFile logfile --normLocal 0 
 
   -P/--noPseudoCounts
     If this flag is passed, fitness scores will NOT be computed without 'smart' pseudo counts as in Wetmore et al 2015.  'Smart' pseudo counts improve the accuracy of fitness scores when one condition has very low or no counts.  As smart pseudo counts use data from all insertions in a gene to adjust the counts used for computing fitness scores for individual insertions, it can be argued that they abolish independence of those scores and compromise the stringency of any statistical analysis of those scores. This author believes that they are, on balance, useful, but others may disagree.
+
+  -C/ --centerOnMean
+    By default strain fitness scores are normalized to a median of zero in a given sample. If this flag is passed they will be normalized to a mean of zero.
 
   -B/--fitnessBrowserOutput
     If this flag is passed, a subdirectory in the output directory called Fitness Browser will be created with output files compatible with the LBNL fitness browser by Morgan Price (https://bitbucket.org/berkeleylab/feba). If this flag is passed, the metadata file will require these additional column headings:

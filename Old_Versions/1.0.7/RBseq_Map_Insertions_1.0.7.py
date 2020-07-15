@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 import argparse
 import numpy as np
@@ -8,10 +9,6 @@ from datetime import datetime
 import re
 from Bio.Blast.Applications import NcbiblastnCommandline
 import os
-
-Version = '1.1.3'
-ReleaseDate = 'July 1, 2020'
-
 
 #http://code.activestate.com/recipes/576874-levenshtein-distance/
 def levenshtein(s1, s2):
@@ -110,11 +107,9 @@ def main(argv):
 
     options = parser.parse_args()
 
-    statusUpdate = 'RBseq_Map_Insertions.py'
+    statusUpdate = 'RBseq_Map_Insertions.py  Samuel Coradetti 2019.'
     printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Version: ' + Version
-    printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Release Date: ' + ReleaseDate
+    statusUpdate = 'Version 1.0.7'
     printUpdate(options.logFile,statusUpdate)
 
     optionDict = options.__dict__

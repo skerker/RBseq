@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 import argparse
 import numpy as np
@@ -8,10 +9,6 @@ from datetime import datetime
 import re
 from Bio.Blast.Applications import NcbiblastnCommandline
 import os
-
-Version = '1.1.3'
-ReleaseDate = 'July 1, 2020'
-
 
 #http://code.activestate.com/recipes/576874-levenshtein-distance/
 def levenshtein(s1, s2):
@@ -110,11 +107,9 @@ def main(argv):
 
     options = parser.parse_args()
 
-    statusUpdate = 'RBseq_Map_Insertions.py'
+    statusUpdate = 'RBseq_Map_Insertions.py  Samuel Coradetti 2019.'
     printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Version: ' + Version
-    printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Release Date: ' + ReleaseDate
+    statusUpdate = 'Version 1.0.4'
     printUpdate(options.logFile,statusUpdate)
 
     optionDict = options.__dict__
@@ -136,7 +131,7 @@ def main(argv):
         sys.exit()
     try:
         with open(fileToOpen, 'r') as FileHandle:
-            metaFrame = pd.read_csv(FileHandle,low_memory=False,sep='\t')
+            metaFrame = pd.read_table(FileHandle,low_memory=False)
             metaFrame = metaFrame[~metaFrame[metaFrame.columns[0]].isnull()]
             FileHandle.close()
     except IOError:
@@ -260,7 +255,7 @@ def main(argv):
                     readName=""
                     readCount=0
                     readSeq=""
-                    readQual=""
+                    readQuql=""
                     NbarcodeFound = 0
                     NbarcodeNotFound = 0
                     lowQualScores = {}

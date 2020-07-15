@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 import pandas as pd
 import numpy as np
@@ -7,11 +8,19 @@ from Bio import SeqIO
 import operator
 from datetime import datetime
 import collections
+
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 import argparse
 
-Version = '1.1.3'
-ReleaseDate = 'July 1, 2020'
+
+plt.style.use('seaborn-colorblind')
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Arial']
+plt.rcParams['pdf.fonttype'] = 42
 
 
 def printUpdate(logfile,update):
@@ -33,11 +42,9 @@ def main(argv):
 
     options  = parser.parse_args()
 
-    statusUpdate = 'RBseq_Annotate_Insertions.py'
+    statusUpdate = 'RBseq_Annotate_Insertions.py  Samuel Coradetti 2019.'
     printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Version: ' + Version
-    printUpdate(options.logFile,statusUpdate)
-    statusUpdate = 'Release Date: ' + ReleaseDate
+    statusUpdate = 'Version 1.0.8'
     printUpdate(options.logFile,statusUpdate)
     
     optionDict = options.__dict__
@@ -324,6 +331,7 @@ def main(argv):
 
 
         #Make chart of insertion rates in different features
+        pp = PdfPages(poolFileName+'_insertionDistribution.pdf')
         plotLabels =[]
         genomeCounts = []
         genomePercents = []
@@ -345,12 +353,14 @@ def main(argv):
         plt.xticks(np.arange(len(plotLabels)),plotLabels,fontsize=8,rotation=20)
         plt.yticks(fontsize=8)
         plt.ylabel('Fraction (%)',fontsize=8,labelpad=1)
-        plt.title('Relative insertion frequency by gene feature',fontsize=9)
+        plt.title('Relative Insertion Frequency by Gene Feature',fontsize=10)
         plt.legend(fontsize=8)
         plt.gcf().subplots_adjust(bottom=0.2, left=0.11, right=0.98, top=0.90)
-        plt.tight_layout()
-        plt.savefig(poolFileName+'_insertionDistribution.pdf')
+
+        pp.savefig()
+        plt.clf()
         plt.close()
+        pp.close()
 
         statusUpdate =  "Saved summary chart of insertion rates across gene features to "+poolFileName+"_insertionDistribution.pdf"
         printUpdate(options.logFile,statusUpdate)
@@ -365,6 +375,8 @@ def main(argv):
             Lengths.append(scaffoldLengths[scaffold])
             Ninserts.append(len(insertionDict[scaffold]))
 
+        pp = PdfPages(poolFileName+'_InsertsPerScaffold.pdf')
+
         fig, ax = plt.subplots()
         fig.set_size_inches(3.42,2)
 
@@ -377,9 +389,11 @@ def main(argv):
         plt.ylabel('Insertions',fontsize=8,labelpad=1)
         plt.title('Inserts per scaffold',fontsize=10)
         plt.gcf().subplots_adjust(bottom=0.16, left=0.13, right=0.98, top=0.90)
-        plt.tight_layout()
-        plt.savefig(poolFileName+'_InsertsPerScaffold.pdf')
+
+        pp.savefig()
+        plt.clf()
         plt.close()
+        pp.close()
 
         statusUpdate =  "Saved summary chart of insertion rates across scaffolds "+poolFileName+"_InsertsPerScaffold.pdf"
         printUpdate(options.logFile,statusUpdate)
@@ -412,6 +426,7 @@ def main(argv):
                 Gcount = localSeq.count('G')
                 scaffGC.append(100*(Gcount + Ccount)/len(localSeq))
 
+        pp = PdfPages(poolFileName+'_GChistogram.pdf')
 
         fig, ax = plt.subplots()
         fig.set_size_inches(3.42,2)
@@ -427,9 +442,11 @@ def main(argv):
         plt.title('GC content around insertion sites',fontsize=10)
         legend = plt.legend(loc='upper left',edgecolor=None,frameon=False, fontsize=8)
         plt.gcf().subplots_adjust(bottom=0.16, left=0.11, right=0.98, top=0.90)
-        plt.tight_layout()
-        plt.savefig(poolFileName+'_GChistogram.pdf')
+
+        pp.savefig()
+        plt.clf()
         plt.close()
+        pp.close()
 
         statusUpdate =  "Saved histogram of insertion location GC content to "+poolFileName+"_GChistogram.pdf"
         printUpdate(options.logFile,statusUpdate)
@@ -474,6 +491,7 @@ def main(argv):
             if scaffoldDensity[i] > 50:
                 hotspotlocations[scaffold].append(i)
 
+        pp = PdfPages(poolFileName+"_LargestScaffold.pdf")
         fig, ax = plt.subplots()
         fig.set_size_inches(3.42,2)
 
@@ -489,9 +507,10 @@ def main(argv):
         plt.title('Insert density across scaffold '+scaffold.split(" ")[0],fontsize=10)
         plt.gcf().subplots_adjust(bottom=0.16, left=0.14, right=0.98, top=0.90)
         legend = plt.legend(loc='upper center',edgecolor=None,frameon=False,fontsize=8,ncol=2)
-        plt.tight_layout()
-        plt.savefig(poolFileName+"_LargestScaffold.pdf")
+        pp.savefig()
+        plt.clf()
         plt.close()
+        pp.close()
 
         statusUpdate =  "Saved plot of insertion density across the largest scaffold in "+poolFileName+"_LargestScaffold.pdf"
         printUpdate(options.logFile,statusUpdate)
